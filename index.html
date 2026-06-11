@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a2e1b">
+<title>Shop Ledger</title>
+<style>
+  :root {
+    --bg: #fdf6ec;
+    --surface: #ffffff;
+    --dark: #1a2e1b;
+    --green: #2d6a4f;
+    --green2: #40916c;
+    --amber: #b5632a;
+    --amber2: #7c3f00;
+    --red: #c0392b;
+    --blue: #2563eb;
+    --text: #2d3a2e;
+    --muted: #9a8878;
+    --border: #d4c4a8;
+    --card: #fff8f0;
+    --wa: #25D366;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; max-width: 520px; margin: 0 auto; }
+  
+  /* ── Topbar ── */
+  .topbar { background: var(--dark); color: #f0e6d3; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  .topbar-title { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+  .topbar-actions { display: flex; gap: 6px; }
+  .icon-btn { background: rgba(255,255,255,0.1); border: none; color: #f0e6d3; cursor: pointer; font-size: 13px; padding: 6px 10px; border-radius: 8px; display: flex; align-items: center; gap: 4px; }
+  .icon-btn:active { background: rgba(255,255,255,0.2); }
+
+  /* ── Login ── */
+  .login-wrap { min-height: 100vh; background: linear-gradient(160deg,#1a2e1b,#3b2a14); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-card { background: var(--bg); border-radius: 20px; padding: 36px 28px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+  .login-card h1 { margin: 14px 0 4px; font-size: 26px; color: var(--dark); }
+  .login-card p { color: var(--amber); font-style: italic; margin-bottom: 24px; }
+  .hint { color: #aaa; font-size: 12px; margin-top: 10px; }
+
+  /* ── Inputs ── */
+  input, select, textarea { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 15px; background: var(--card); margin-bottom: 12px; color: var(--text); font-family: inherit; outline: none; }
+  input:focus, select:focus { border-color: var(--green); }
+  label { display: block; font-size: 12px; font-weight: 700; color: var(--amber2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── Buttons ── */
+  .btn { display: block; width: 100%; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity .15s; }
+  .btn:active { opacity: .85; }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-red { background: var(--red); color: #fff; }
+  .btn-amber { background: var(--amber); color: #fff; }
+  .btn-ghost { background: #e8e0d5; color: #4a3728; }
+  .btn-green { background: #1e8449; color: #fff; }
+  .btn-wa { background: var(--wa); color: #fff; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; padding: 8px 14px; border-radius: 10px; font-size: 14px; font-weight: 700; }
+  .btn-wa-sm { font-size: 12px; padding: 5px 10px; border-radius: 8px; }
+  .btn-icon { background: #f0e6d3; border: none; color: #4a3728; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+  .btn-del { background: none; border: none; color: var(--red); cursor: pointer; font-size: 12px; padding: 0; margin-top: 8px; }
+  .row-btns { display: flex; gap: 8px; }
+  .row-btns .btn { flex: 1; }
+
+  /* ── Content ── */
+  .content { padding: 14px 14px 60px; }
+
+  /* ── Cards ── */
+  .card-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .sum-card { flex: 1; border-radius: 14px; padding: 14px 12px; color: #fff; }
+  .sum-card.full { flex: 1 1 100%; }
+  .sum-card .lbl { font-size: 11px; opacity: .85; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .sum-card .val { font-size: 22px; font-weight: 800; margin-bottom: 2px; }
+  .sum-card .sub { font-size: 11px; opacity: .7; }
+  .card-debt { background: linear-gradient(135deg,#c0392b,#e74c3c); }
+  .card-credit { background: linear-gradient(135deg,#1e8449,#27ae60); }
+  .card-total { background: linear-gradient(135deg,#7c3f00,#b5632a); }
+
+  /* ── Sync bar ── */
+  .sync-bar { background: #e8fdf0; border: 1.5px solid #27ae60; border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .sync-bar .info p { margin: 0; }
+  .sync-bar .info .t1 { font-size: 13px; font-weight: 700; color: #1a3c2a; }
+  .sync-bar .info .t2 { font-size: 11px; color: var(--green); }
+  .btn-sync { padding: 7px 14px; background: var(--green); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+
+  /* ── Search row ── */
+  .search-row { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; }
+  .search-box { flex: 1; display: flex; align-items: center; background: #fff; border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 12px; gap: 8px; }
+  .search-box input { border: none; background: transparent; margin: 0; padding: 0; font-size: 15px; flex: 1; }
+  .btn-add { padding: 10px 16px; background: var(--amber); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+
+  /* ── Client cards ── */
+  .client-list { display: flex; flex-direction: column; gap: 10px; }
+  .client-card { background: #fff; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); border: 1px solid #ede0cc; }
+  .client-top { padding: 13px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .client-top:active { background: #fdf6ec; }
+  .avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--green); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; flex-shrink: 0; }
+  .client-name { font-weight: 700; font-size: 15px; color: var(--dark); margin: 0; }
+  .client-sub { font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+  .client-amt { text-align: right; flex-shrink: 0; }
+  .client-amt .debt-val { font-weight: 800; font-size: 16px; }
+  .client-amt .debt-lbl { font-size: 11px; color: var(--muted); }
+  .client-bottom { padding: 8px 15px 10px; border-top: 1px solid #f5ede0; display: flex; align-items: center; background: #fdf9f4; gap: 8px; }
+
+  /* ── Section header with edit ── */
+  .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #ede0cc; }
+  .section-title { font-size: 15px; color: #4a3728; font-weight: 700; }
+
+  /* ── Client sheet ── */
+  .client-header { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .client-header-top { display: flex; align-items: flex-start; gap: 14px; }
+  .big-avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--green); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px; flex-shrink: 0; }
+  .client-header-info { flex: 1; min-width: 0; }
+  .client-header-info h2 { font-size: 19px; color: var(--dark); margin-bottom: 2px; }
+  .editable-field { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .editable-val { font-size: 13px; color: #4a3728; cursor: pointer; border-bottom: 1px dashed var(--border); padding-bottom: 1px; }
+  .editable-val:hover { border-color: var(--green); }
+  .inline-edit { display: flex; gap: 6px; align-items: center; margin-top: 6px; width: 100%; }
+  .inline-edit input { margin: 0; flex: 1; font-size: 13px; padding: 7px 10px; }
+  .inline-edit button { padding: 7px 12px; font-size: 13px; white-space: nowrap; }
+
+  /* ── WA banner ── */
+  .wa-banner { background: linear-gradient(135deg,#e8fdf0,#d5f5e3); border: 1.5px solid var(--wa); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .wa-banner .wa-info .t1 { font-weight: 700; font-size: 14px; color: #1a3c2a; }
+  .wa-banner .wa-info .t2 { font-size: 12px; color: var(--green); margin-top: 2px; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tab { flex: 1; padding: 9px 4px; background: #e8e0d5; border: none; border-radius: 10px; font-size: 12px; cursor: pointer; color: #4a3728; font-family: inherit; font-weight: 600; }
+  .tab.active { background: var(--green); color: #fff; }
+
+  /* ── Transactions ── */
+  .tx-card { background: #fff; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .tx-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .tx-date { font-size: 12px; color: var(--muted); }
+  .badge { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+  .badge-debt { background: #fde8e8; color: var(--red); }
+  .badge-credit { background: #e8fdf0; color: #1e8449; }
+  .tx-items { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+  .item-tag { background: #f0e6d3; border-radius: 20px; padding: 3px 10px; font-size: 12px; color: #4a3728; }
+  .tx-note { font-size: 13px; color: #7a6045; }
+
+  /* ── Form box ── */
+  .form-box { background: #fff; border-radius: 14px; padding: 16px; box-shadow: var(--shadow); }
+  .form-title { font-size: 17px; color: var(--dark); font-weight: 700; margin-bottom: 14px; }
+  .item-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+  .item-row input { margin: 0; flex: 1; }
+  .item-row input:nth-child(2) { flex: 0.6; }
+  .item-row input:nth-child(3) { flex: 1; }
+  .debt-total { text-align: right; font-size: 16px; color: var(--dark); margin: 10px 0; font-weight: 600; }
+
+  /* ── Modal ── */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+  .modal { background: var(--bg); border-radius: 16px; padding: 24px 20px; width: 100%; max-width: 400px; }
+  .modal h3 { margin-bottom: 16px; color: var(--dark); font-size: 17px; }
+  .modal-row { display: flex; gap: 8px; margin-top: 8px; }
+  .modal-row .btn { flex: 1; }
+
+  /* ── Export modal ── */
+  .export-modal { background: var(--bg); border-radius: 16px; width: 100%; max-width: 440px; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
+  .export-head { background: var(--dark); padding: 13px 16px; display: flex; justify-content: space-between; align-items: center; border-radius: 16px 16px 0 0; }
+  .export-head span { color: #f0e6d3; font-weight: 700; font-size: 15px; }
+  .export-head button { background: none; border: none; color: #f0e6d3; font-size: 22px; cursor: pointer; line-height: 1; }
+  .export-tabs { display: flex; gap: 8px; padding: 10px 12px; background: var(--bg); border-bottom: 1px solid #ede0cc; }
+  .export-hint { padding: 8px 14px; background: #e8fdf0; border-bottom: 1px solid #b7ebc8; font-size: 12px; color: #1e5c38; line-height: 1.5; }
+  .export-body { flex: 1; overflow: auto; padding: 10px 12px; background: #fff; }
+  .export-body pre { font-family: monospace; font-size: 11px; color: var(--dark); white-space: pre-wrap; word-break: break-word; line-height: 1.6; }
+  .export-foot { padding: 12px; border-top: 1px solid #ede0cc; background: var(--bg); }
+
+  /* ── Settings ── */
+  .settings-section { margin-bottom: 28px; }
+  .currency-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .cur-btn { padding: 7px 12px; background: #e8e0d5; color: #4a3728; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .cur-btn.active { background: var(--green); color: #fff; border-color: var(--green); }
+  .sync-info-box { background: #f0fdf4; border: 1.5px solid #27ae60; border-radius: 12px; padding: 14px; }
+  .sync-info-box .si-title { font-weight: 700; color: #1a3c2a; font-size: 13px; margin-bottom: 4px; }
+  .sync-info-box .si-desc { font-size: 12px; color: var(--green); line-height: 1.5; margin-bottom: 10px; }
+  .user-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0e6d3; }
+  .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--green); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; flex-shrink: 0; }
+  .user-info { flex: 1; }
+  .user-info .uname { font-weight: 700; color: var(--dark); font-size: 14px; }
+  .user-info .urole { display: inline-block; border-radius: 20px; padding: 2px 10px; font-size: 11px; margin-top: 2px; }
+  .role-admin { background: #d5f5e3; color: #1e8449; }
+  .role-staff { background: #e8e0d5; color: #4a3728; }
+  .edit-card { background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .edit-card .ec-title { font-weight: 700; color: var(--dark); font-size: 14px; margin-bottom: 10px; }
+
+  /* ── Flash message ── */
+  .flash { border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 14px; border: 1px solid; }
+  .flash-ok { background: #d5f5e3; border-color: #27ae60; color: #1e8449; }
+  .flash-err { background: #fde8e8; border-color: var(--red); color: var(--red); }
+
+  /* ── Empty ── */
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); font-style: italic; }
+
+  /* ── Misc ── */
+  .tag-you { font-size: 11px; color: var(--muted); }
+  .outstanding-lbl { font-size: 15px; font-weight: 700; margin: 2px 0 4px; }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  SHOP LEDGER — Self-contained single-file web app
+//  • Works on any phone browser
+//  • Add to Home Screen for app-like experience
+//  • Google Sheets real-time sync (optional)
+//  • localStorage persistence
+// ════════════════════════════════════════════════════════════
+
+// ── Helpers ──────────────────────────────────────────────────
+const todayStr = () => new Date().toISOString().split("T")[0];
+const fmtDate  = d => new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+const money    = (n,sym) => `${sym}${Number(n).toFixed(2)}`;
+const el       = (tag,cls,html) => { const e=document.createElement(tag); if(cls)e.className=cls; if(html!==undefined)e.innerHTML=html; return e; };
+const qs       = s => document.querySelector(s);
+
+function hashPin(pin){
+  let h=0; for(let i=0;i<pin.length;i++){h=((h<<5)-h)+pin.charCodeAt(i);h|=0;} return h.toString();
+}
+function cleanPhone(r){ return r?r.replace(/\D/g,""):""; }
+function waUrl(phone,name,amt,shop,sym){
+  const n=cleanPhone(phone); if(!n) return null;
+  return `https://wa.me/${n}?text=${encodeURIComponent(`Hello ${name},\n\nReminder from *${shop}*.\n\nOutstanding: *${money(amt,sym)}*\n\nPlease clear your dues.\n\nThank you 🙏`)}`;
+}
+function copyText(text,cb){
+  if(navigator.clipboard){navigator.clipboard.writeText(text).then(cb).catch(()=>fbCopy(text,cb));}
+  else fbCopy(text,cb);
+}
+function fbCopy(text,cb){
+  const t=document.createElement("textarea");t.value=text;t.style.cssText="position:fixed;opacity:0";
+  document.body.appendChild(t);t.focus();t.select();document.execCommand("copy");document.body.removeChild(t);cb();
+}
+
+// ── Storage ───────────────────────────────────────────────────
+const KEY = "shopLedger_v3";
+function load(){ try{return JSON.parse(localStorage.getItem(KEY))||null;}catch{return null;} }
+function save(d){ localStorage.setItem(KEY,JSON.stringify(d)); }
+function init(){
+  return { shopName:"Shop Name", currencySymbol:"₨", googleScriptUrl:"", primaryColor:"#2d6a4f",
+    users:[{username:"admin",pinHash:hashPin("0000"),role:"admin"}], clients:{} };
+}
+
+// ── Google Sheets Sync ────────────────────────────────────────
+function syncSheets(store){
+  if(!store.googleScriptUrl||!store.googleScriptUrl.startsWith("https://")) return;
+  const sym=store.currencySymbol||"₨";
+  const clients=Object.entries(store.clients).map(([name,c])=>({
+    name, phone:c.phone||"", outstanding:c.outstanding,
+    lastDate:c.transactions.length?c.transactions[c.transactions.length-1].date:"—",
+    transactions:c.transactions.map(t=>t.type==="debt"
+      ?[t.date,"DEBT",t.items.map(i=>`${i.name}x${i.qty}@${sym}${i.price}`).join(", "),t.amount,""]
+      :[t.date,"CREDIT",t.note||"",-t.amount,""])
+  }));
+  const grandTotal=Object.values(store.clients).reduce((s,c)=>s+c.outstanding,0);
+  fetch(store.googleScriptUrl,{method:"POST",mode:"no-cors",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({shopName:store.shopName,grandTotal,clients})
+  }).catch(()=>{});
+}
+
+// ── Export Text ───────────────────────────────────────────────
+function buildExportText(store, clientFilter=null){
+  const sym=store.currencySymbol||"₨";
+  const lines=[];
+  if(!clientFilter){
+    const gt=Object.values(store.clients).reduce((s,c)=>s+c.outstanding,0);
+    lines.push(`=== ${store.shopName} — CREDIT LEDGER ===`);
+    lines.push(`Generated: ${new Date().toLocaleString()}`);
+    lines.push(""); lines.push("SUMMARY"); lines.push("-".repeat(55));
+    lines.push("Client\t\tPhone\t\tOutstanding\tLast Date");
+    lines.push("-".repeat(55));
+    Object.entries(store.clients).forEach(([n,c])=>{
+      const last=c.transactions.length?c.transactions[c.transactions.length-1].date:"—";
+      lines.push(`${n}\t\t${c.phone||"—"}\t\t${sym}${c.outstanding.toFixed(2)}\t${last}`);
+    });
+    lines.push("-".repeat(55));
+    lines.push(`GRAND TOTAL: ${sym}${gt.toFixed(2)}`);
+    lines.push("");
+  }
+  const entries = clientFilter ? [[clientFilter, store.clients[clientFilter]]] : Object.entries(store.clients);
+  entries.forEach(([name,c])=>{
+    if(!c) return;
+    lines.push(""); lines.push("=".repeat(55));
+    lines.push(`CLIENT: ${name}`);
+    lines.push(`Phone: ${c.phone||"N/A"}  Outstanding: ${sym}${c.outstanding.toFixed(2)}`);
+    lines.push("-".repeat(55));
+    lines.push("Date\t\tType\t\tAmount\t\tDetails");
+    lines.push("-".repeat(55));
+    c.transactions.forEach(t=>{
+      if(t.type==="debt"){
+        const items=t.items.map(i=>`${i.name}x${i.qty}@${sym}${i.price}`).join(", ");
+        lines.push(`${t.date}\tDEBT\t+${sym}${t.amount.toFixed(2)}\t${items}`);
+      } else {
+        lines.push(`${t.date}\tCREDIT\t-${sym}${t.amount.toFixed(2)}\t${t.note}`);
+      }
+    });
+    lines.push("-".repeat(55));
+    lines.push(`Total Outstanding: ${sym}${c.outstanding.toFixed(2)}`);
+  });
+  return lines.join("\n");
+}
+
+// ── SVG Icons ─────────────────────────────────────────────────
+const SHOP_SVG=(size=44)=>`<svg width="${size}" height="${size}" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="14" width="48" height="10" rx="2" fill="#b5632a"/>
+  <path d="M8 24L14 14M20 24L26 14M32 24L38 14M44 24L50 14M56 24V14" stroke="#fdf6ec" stroke-width="2"/>
+  <rect x="10" y="24" width="44" height="28" rx="2" fill="#2d6a4f"/>
+  <rect x="27" y="36" width="10" height="16" rx="2" fill="#fdf6ec"/>
+  <circle cx="35" cy="44" r="1" fill="#b5632a"/>
+  <rect x="14" y="28" width="10" height="8" rx="1" fill="#fdf6ec" opacity="0.9"/>
+  <rect x="40" y="28" width="10" height="8" rx="1" fill="#fdf6ec" opacity="0.9"/>
+  <ellipse cx="32" cy="34" rx="5" ry="2" fill="#f0e6d3"/>
+  <path d="M27 34 Q32 30 37 34" stroke="#b5632a" stroke-width="1.5" fill="none"/>
+</svg>`;
+
+const WA_SVG=`<svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
+
+// ════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════
+let store = load() || init();
+let session = null;
+let currentView = "login";  // login | dashboard | client | settings
+let activeClient = null;
+
+function persist(fn){
+  store = typeof fn === "function" ? fn(store) : fn;
+  save(store);
+  if(store.googleScriptUrl) syncSheets(store);
+  render();
+}
+
+// ════════════════════════════════════════════════════════════
+//  RENDER ENGINE
+// ════════════════════════════════════════════════════════════
+function render(){
+  const app = qs("#app");
+  app.innerHTML = "";
+  if(currentView === "login")     { app.appendChild(renderLogin()); return; }
+  app.appendChild(renderTopBar());
+  const content = el("div","content");
+  if(currentView === "dashboard") content.appendChild(renderDashboard());
+  if(currentView === "client")    content.appendChild(renderClientSheet());
+  if(currentView === "settings")  content.appendChild(renderSettings());
+  app.appendChild(content);
+}
+
+function nav(view, client=null){
+  currentView = view;
+  activeClient = client;
+  render();
+}
+
+// ════════════════════════════════════════════════════════════
+//  LOGIN
+// ════════════════════════════════════════════════════════════
+function renderLogin(){
+  const wrap = el("div","login-wrap");
+  const card = el("div","login-card");
+  card.innerHTML = `${SHOP_SVG(72)}<h1>${store.shopName}</h1><p>Credit Ledger</p>`;
+  const uInput = el("input"); uInput.placeholder="Username"; uInput.autocomplete="username";
+  const pInput = el("input"); pInput.placeholder="PIN"; pInput.type="password"; pInput.maxLength=8;
+  const err = el("p","",  ""); err.style.cssText="color:#e74c3c;font-size:13px;margin-bottom:8px;display:none";
+  const btn = el("button","btn btn-primary","🔒 Sign In");
+  const hint = el("p","hint","Default: admin / 0000");
+
+  btn.onclick = pInput.onkeydown = (e) => {
+    if(e.type==="keydown" && e.key!=="Enter") return;
+    const u = store.users.find(u=>u.username===uInput.value.trim()&&u.pinHash===hashPin(pInput.value));
+    if(!u){ err.style.display="block"; err.textContent="Wrong username or PIN."; return; }
+    session={username:u.username,role:u.role}; nav("dashboard");
+  };
+
+  [uInput,pInput,err,btn,hint].forEach(e=>card.appendChild(e));
+  wrap.appendChild(card);
+  return wrap;
+}
+
+// ════════════════════════════════════════════════════════════
+//  TOPBAR
+// ════════════════════════════════════════════════════════════
+function renderTopBar(){
+  const bar = el("div","topbar");
+  if(currentView !== "dashboard"){
+    const back = el("button","icon-btn","← Back");
+    back.onclick = () => nav("dashboard");
+    bar.appendChild(back);
+  } else {
+    const title = el("div","topbar-title");
+    title.innerHTML = `${SHOP_SVG(22)} <span>${store.shopName}</span>`;
+    bar.appendChild(title);
+  }
+  const actions = el("div","topbar-actions");
+  if(session?.role==="admin"){
+    const cfg = el("button","icon-btn","⚙️ Settings");
+    cfg.onclick = () => nav("settings");
+    actions.appendChild(cfg);
+  }
+  const logout = el("button","icon-btn","🚪");
+  logout.onclick = () => { session=null; nav("login"); };
+  actions.appendChild(logout);
+  bar.appendChild(actions);
+  return bar;
+}
+
+// ════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════════════════
+function renderDashboard(){
+  const sym = store.currencySymbol||"₨";
+  const today = todayStr();
+  const clients = store.clients;
+  const todayDebt   = Object.values(clients).reduce((s,c)=>s+c.transactions.filter(t=>t.date===today&&t.type==="debt").reduce((a,t)=>a+t.amount,0),0);
+  const todayCredit = Object.values(clients).reduce((s,c)=>s+c.transactions.filter(t=>t.date===today&&t.type==="credit").reduce((a,t)=>a+t.amount,0),0);
+  const grandTotal  = Object.values(clients).reduce((s,c)=>s+c.outstanding,0);
+
+  const wrap = el("div");
+
+  // Cards
+  const row1 = el("div","card-row");
+  row1.innerHTML=`
+    <div class="sum-card card-debt"><div class="lbl">Today's Debt</div><div class="val">${money(todayDebt,sym)}</div><div class="sub">${today}</div></div>
+    <div class="sum-card card-credit"><div class="lbl">Today's Credit</div><div class="val">${money(todayCredit,sym)}</div><div class="sub">${today}</div></div>`;
+  const row2 = el("div","card-row");
+  row2.innerHTML=`<div class="sum-card card-total full"><div class="lbl">Total Outstanding</div><div class="val">${money(grandTotal,sym)}</div><div class="sub">All clients combined</div></div>`;
+  wrap.appendChild(row1); wrap.appendChild(row2);
+
+  // Sync bar
+  const syncBar = el("div","sync-bar");
+  syncBar.innerHTML=`<div class="info"><p class="t1">${store.googleScriptUrl?"🟢 Google Sheets Linked":"📋 Data Backup"}</p><p class="t2">${store.googleScriptUrl?"Auto-syncing every entry":"Copy data to WPS or any app"}</p></div>`;
+  const viewBtn = el("button","btn-sync","📋 View Data");
+  viewBtn.onclick = () => showExportModal();
+  syncBar.appendChild(viewBtn);
+  wrap.appendChild(syncBar);
+
+  // Search + Add
+  const searchRow = el("div","search-row");
+  const searchBox = el("div","search-box");
+  searchBox.innerHTML=`<span>🔍</span>`;
+  const searchInput = el("input"); searchInput.placeholder="Search client…"; searchInput.style.cssText="border:none;background:transparent;margin:0;padding:0;font-size:15px;flex:1;outline:none";
+  searchBox.appendChild(searchInput);
+  const addBtn = el("button","btn-add","➕ New Client");
+  addBtn.onclick = () => showAddClientModal();
+  searchRow.appendChild(searchBox); searchRow.appendChild(addBtn);
+  wrap.appendChild(searchRow);
+
+  // Client list
+  const listWrap = el("div","client-list");
+  let names = Object.keys(clients).sort();
+  searchInput.oninput = () => {
+    const q = searchInput.value.toLowerCase();
+    listWrap.innerHTML="";
+    names.filter(n=>n.toLowerCase().includes(q)).forEach(n=>listWrap.appendChild(buildClientCard(n,clients[n],sym)));
+    if(listWrap.children.length===0) listWrap.innerHTML=`<div class="empty">No clients found.</div>`;
+  };
+  if(names.length===0) listWrap.innerHTML=`<div class="empty">No clients yet. Add one above.</div>`;
+  else names.forEach(n=>listWrap.appendChild(buildClientCard(n,clients[n],sym)));
+  wrap.appendChild(listWrap);
+  return wrap;
+}
+
+function buildClientCard(name,c,sym){
+  const card = el("div","client-card");
+  const top = el("div","client-top");
+  const av = el("div","avatar",name[0].toUpperCase());
+  const info = el("div","",`<p class="client-name">${name}</p><p class="client-sub">${c.phone?"📞 "+c.phone:"No phone"} · Last: ${c.transactions.length?fmtDate(c.transactions[c.transactions.length-1].date):"—"}</p>`);
+  info.style.flex="1";
+  const amtColor = c.outstanding>0?"#c0392b":"#27ae60";
+  const amt = el("div","client-amt",`<div class="debt-val" style="color:${amtColor}">${money(c.outstanding,sym)}</div><div class="debt-lbl">${c.outstanding>0?"owes":"clear"}</div>`);
+  top.appendChild(av); top.appendChild(info); top.appendChild(amt);
+  top.onclick = () => nav("client", name);
+  card.appendChild(top);
+
+  const bottom = el("div","client-bottom");
+  const waLink = c.phone ? waUrl(name,name,c.outstanding,store.shopName,sym) : null;
+  if(waLink){
+    const wa = el("a","btn-wa btn-wa-sm");
+    wa.href=waLink; wa.target="_blank"; wa.rel="noopener noreferrer";
+    wa.innerHTML=`${WA_SVG} ${c.outstanding>0?"Send Reminder":"WhatsApp"}`;
+    wa.onclick = e => e.stopPropagation();
+    bottom.appendChild(wa);
+    bottom.appendChild(el("span","",`<span style="font-size:11px;color:#9a8878;margin-left:6px">${c.outstanding>0?"Payment reminder":"Open chat"}</span>`));
+  } else {
+    bottom.innerHTML=`<span style="font-size:11px;color:#bbb;font-style:italic">Add phone number to enable WhatsApp</span>`;
+  }
+  card.appendChild(bottom);
+  return card;
+}
+
+// ════════════════════════════════════════════════════════════
+//  ADD CLIENT MODAL
+// ════════════════════════════════════════════════════════════
+function showAddClientModal(){
+  const bg = el("div","modal-bg");
+  const modal = el("div","modal");
+  modal.innerHTML=`<h3>Add New Client</h3>`;
+
+  const fields = [
+    {label:"Full Name *", id:"nc-name", type:"text", placeholder:"e.g. Ahmed Khan"},
+    {label:"Phone (WhatsApp with country code)", id:"nc-phone", type:"tel", placeholder:"e.g. 923001234567"},
+    {label:"Address (optional)", id:"nc-addr", type:"text", placeholder:"e.g. House 5, Main Bazar"},
+    {label:"Notes (optional)", id:"nc-note", type:"text", placeholder:"e.g. Regular customer"},
+  ];
+  fields.forEach(f=>{
+    const lbl=el("label",f.label); lbl.htmlFor=f.id;
+    const inp=el("input"); inp.id=f.id; inp.type=f.type; inp.placeholder=f.placeholder;
+    modal.appendChild(lbl); modal.appendChild(inp);
+  });
+
+  const hint=el("p","",`<small style="color:#9a8878">Country code without + (Pakistan: 92, USA: 1)</small>`);
+  modal.appendChild(hint);
+
+  const row=el("div","modal-row");
+  const cancel=el("button","btn btn-ghost","Cancel");
+  cancel.onclick=()=>bg.remove();
+  const add=el("button","btn btn-primary","Add Client");
+  add.onclick=()=>{
+    const name=qs("#nc-name").value.trim();
+    if(!name){qs("#nc-name").style.borderColor="#e74c3c";return;}
+    if(store.clients[name]){alert("Client already exists.");return;}
+    persist(prev=>({...prev,clients:{...prev.clients,[name]:{outstanding:0,phone:qs("#nc-phone").value.trim(),address:qs("#nc-addr").value.trim(),notes:qs("#nc-note").value.trim(),transactions:[]}}}));
+    bg.remove();
+  };
+  row.appendChild(cancel); row.appendChild(add);
+  modal.appendChild(row);
+  bg.appendChild(modal);
+  bg.onclick=e=>{if(e.target===bg)bg.remove();};
+  document.body.appendChild(bg);
+}
+
+// ════════════════════════════════════════════════════════════
+//  CLIENT SHEET
+// ════════════════════════════════════════════════════════════
+function renderClientSheet(){
+  const sym = store.currencySymbol||"₨";
+  const c = store.clients[activeClient];
+  if(!c) return el("div","empty","Client not found.");
+  const canEdit = session.role==="admin";
+  const wrap = el("div");
+
+  // Header
+  const header = el("div","client-header");
+
+  // Editable name
+  const headerTop = el("div","client-header-top");
+  const bigAv = el("div","big-avatar",activeClient[0].toUpperCase());
+
+  const info = el("div","client-header-info");
+
+  // Editable name
+  const nameRow = el("div","editable-field");
+  const nameVal = el("span","editable-val",activeClient);
+  nameVal.title="Tap to rename";
+  nameVal.onclick = () => {
+    const inp = el("input"); inp.value=activeClient; inp.style.cssText="font-size:17px;font-weight:700;";
+    const saveBtn = el("button","btn btn-primary","✓"); saveBtn.style.cssText="width:auto;padding:6px 12px;font-size:13px";
+    const cancelBtn = el("button","btn btn-ghost","✕"); cancelBtn.style.cssText="width:auto;padding:6px 10px;font-size:13px";
+    nameRow.innerHTML=""; nameRow.appendChild(inp); nameRow.appendChild(saveBtn); nameRow.appendChild(cancelBtn);
+    inp.focus();
+    saveBtn.onclick = () => {
+      const newName=inp.value.trim();
+      if(!newName||newName===activeClient){nav("client",activeClient);return;}
+      if(store.clients[newName]){alert("That name already exists.");return;}
+      persist(prev=>{
+        const clients={...prev.clients};
+        clients[newName]=clients[activeClient];
+        delete clients[activeClient];
+        return {...prev,clients};
+      });
+      activeClient=newName; nav("client",activeClient);
+    };
+    cancelBtn.onclick=()=>nav("client",activeClient);
+  };
+  nameRow.appendChild(nameVal);
+  if(canEdit){ const editHint=el("span","",`<span style="font-size:11px;color:#9a8878">(tap to edit)</span>`); nameRow.appendChild(editHint); }
+  info.appendChild(nameRow);
+
+  const outstandingP = el("p","outstanding-lbl");
+  outstandingP.style.color = c.outstanding>0?"#e74c3c":"#27ae60";
+  outstandingP.textContent = `${money(c.outstanding,sym)} ${c.outstanding>0?"outstanding":"— all clear"}`;
+  info.appendChild(outstandingP);
+
+  // Editable fields
+  const editableFields = [
+    {key:"phone", label:"📞 Phone", placeholder:"WhatsApp number with country code"},
+    {key:"address", label:"📍 Address", placeholder:"Client address"},
+    {key:"notes", label:"📝 Notes", placeholder:"Any notes about client"},
+  ];
+  editableFields.forEach(f=>{
+    const row=el("div","editable-field");
+    const valSpan=el("span","editable-val",c[f.key]?`${f.label}: ${c[f.key]}`:f.label);
+    valSpan.title="Tap to edit";
+    valSpan.onclick=()=>{
+      if(!canEdit) return;
+      row.innerHTML="";
+      const inp=el("input"); inp.value=c[f.key]||""; inp.placeholder=f.placeholder; inp.style.cssText="font-size:13px;padding:7px 10px;margin:0";
+      const sv=el("button","btn btn-primary","Save"); sv.style.cssText="width:auto;padding:7px 12px;font-size:13px";
+      const cn=el("button","btn btn-ghost","✕"); cn.style.cssText="width:auto;padding:7px 10px;font-size:13px;margin:0";
+      sv.onclick=()=>{
+        persist(prev=>({...prev,clients:{...prev.clients,[activeClient]:{...prev.clients[activeClient],[f.key]:inp.value.trim()}}}));
+      };
+      cn.onclick=()=>nav("client",activeClient);
+      row.appendChild(inp); row.appendChild(sv); row.appendChild(cn);
+      inp.focus();
+    };
+    row.appendChild(valSpan);
+    info.appendChild(row);
+  });
+
+  const headerActions = el("div","",``);
+  headerActions.style.cssText="display:flex;gap:6px;margin-left:auto;flex-shrink:0";
+  if(canEdit){
+    const copyBtn=el("button","btn-icon","📋");
+    copyBtn.title="Copy client data";
+    copyBtn.onclick=()=>{copyText(buildExportText(store,activeClient),()=>alert("✅ Copied! Paste into WPS."));};
+    headerActions.appendChild(copyBtn);
+    const delBtn=el("button","btn-icon","🗑");
+    delBtn.title="Delete client";
+    delBtn.style.background="#fde8e8"; delBtn.style.color="#c0392b";
+    delBtn.onclick=()=>{
+      if(!confirm(`Delete ${activeClient} and all their records?`)) return;
+      persist(prev=>{const cl={...prev.clients};delete cl[activeClient];return{...prev,clients:cl};});
+      nav("dashboard");
+    };
+    headerActions.appendChild(delBtn);
+  }
+
+  headerTop.appendChild(bigAv);
+  headerTop.appendChild(info);
+  headerTop.appendChild(headerActions);
+  header.appendChild(headerTop);
+  wrap.appendChild(header);
+
+  // WA banner
+  const waLink = c.phone ? waUrl(c.phone,activeClient,c.outstanding,store.shopName,sym) : null;
+  if(waLink && c.outstanding>0){
+    const wab=el("div","wa-banner");
+    wab.innerHTML=`<div class="wa-info"><div class="t1">Send Payment Reminder</div><div class="t2">Opens WhatsApp with pre-filled message</div></div>`;
+    const waA=el("a","btn-wa"); waA.href=waLink; waA.target="_blank"; waA.rel="noopener noreferrer";
+    waA.innerHTML=`${WA_SVG} Send Reminder`;
+    wab.appendChild(waA);
+    wrap.appendChild(wab);
+  }
+
+  // Tabs
+  let activeTab="history";
+  const tabs=el("div","tabs");
+  const tabDefs=[["history","📋 History"],["addDebt","📌 Add Debt"],["addCredit","✅ Add Credit"]];
+  const tabContent=el("div");
+
+  function switchTab(t){
+    activeTab=t;
+    tabs.querySelectorAll(".tab").forEach((b,i)=>b.classList.toggle("active",tabDefs[i][0]===t));
+    tabContent.innerHTML="";
+    if(t==="history") tabContent.appendChild(renderHistory(c,sym,canEdit));
+    if(t==="addDebt") tabContent.appendChild(renderAddDebt(sym));
+    if(t==="addCredit") tabContent.appendChild(renderAddCredit(c,sym));
+  }
+  tabDefs.forEach(([id,label])=>{
+    const btn=el("button","tab",label);
+    btn.onclick=()=>switchTab(id);
+    if(id==="history") btn.classList.add("active");
+    tabs.appendChild(btn);
+  });
+  wrap.appendChild(tabs);
+  switchTab("history");
+  wrap.appendChild(tabContent);
+  return wrap;
+}
+
+function renderHistory(c,sym,canEdit){
+  const wrap=el("div");
+  const sorted=[...c.transactions].reverse();
+  if(!sorted.length) return el("div","empty","No transactions yet.");
+  sorted.forEach(tx=>{
+    const card=el("div","tx-card");
+    card.style.borderLeft=`4px solid ${tx.type==="debt"?"#e74c3c":"#27ae60"}`;
+    const top=el("div","tx-top");
+    top.innerHTML=`<span class="tx-date">${fmtDate(tx.date)}</span><span class="badge ${tx.type==="debt"?"badge-debt":"badge-credit"}">${tx.type==="debt"?`DEBT + ${money(tx.amount,sym)}`:`CREDIT - ${money(tx.amount,sym)}`}</span>`;
+    card.appendChild(top);
+    if(tx.type==="debt"){
+      const items=el("div","tx-items");
+      tx.items.forEach(it=>{ const t=el("span","item-tag",`${it.name} ×${it.qty} @ ${sym}${it.price}`); items.appendChild(t); });
+      card.appendChild(items);
+    } else {
+      card.appendChild(el("p","tx-note",tx.note));
+    }
+    if(canEdit){
+      const del=el("button","btn-del","🗑 Delete");
+      del.onclick=()=>{
+        if(!confirm("Delete this entry?")) return;
+        const adj=tx.type==="debt"?-tx.amount:tx.amount;
+        persist(prev=>{
+          const cl=prev.clients[activeClient];
+          return {...prev,clients:{...prev.clients,[activeClient]:{...cl,outstanding:Math.max(0,cl.outstanding+adj),transactions:cl.transactions.filter(t=>t.id!==tx.id)}}};
+        });
+      };
+      card.appendChild(del);
+    }
+    wrap.appendChild(card);
+  });
+  return wrap;
+}
+
+function renderAddDebt(sym){
+  const box=el("div","form-box");
+  box.innerHTML=`<div class="form-title">📌 Record Debt</div>`;
+  let items=[{name:"",qty:1,price:0}];
+
+  const itemsWrap=el("div");
+  function renderItems(){
+    itemsWrap.innerHTML="";
+    items.forEach((it,i)=>{
+      const row=el("div","item-row");
+      const nInp=el("input"); nInp.placeholder="Item name"; nInp.value=it.name; nInp.oninput=e=>items[i].name=e.target.value;
+      const qInp=el("input"); qInp.type="number"; qInp.min="1"; qInp.placeholder="Qty"; qInp.value=it.qty; qInp.oninput=e=>{items[i].qty=Number(e.target.value);updateTotal();};
+      const pInp=el("input"); pInp.type="number"; pInp.min="0"; pInp.placeholder=`Price ${sym}`; pInp.value=it.price; pInp.oninput=e=>{items[i].price=Number(e.target.value);updateTotal();};
+      [nInp,qInp,pInp].forEach(inp=>inp.style.margin="0");
+      row.appendChild(nInp); row.appendChild(qInp); row.appendChild(pInp);
+      if(items.length>1){ const rb=el("button","btn-icon","✕"); rb.style.cssText="background:#fde8e8;color:#c0392b;flex-shrink:0"; rb.onclick=()=>{items.splice(i,1);renderItems();}; row.appendChild(rb); }
+      itemsWrap.appendChild(row);
+    });
+  }
+  renderItems();
+
+  const totalDiv=el("div","debt-total","Total Debt: 0.00");
+  function updateTotal(){ const t=items.reduce((s,it)=>s+it.qty*it.price,0); totalDiv.textContent=`Total Debt: ${money(t,sym)}`; }
+
+  const addItemBtn=el("button","btn btn-ghost","+ Add Item"); addItemBtn.style.cssText="width:auto;padding:8px 14px;margin-bottom:10px";
+  addItemBtn.onclick=()=>{items.push({name:"",qty:1,price:0});renderItems();updateTotal();};
+
+  const saveBtn=el("button","btn btn-primary","Save Debt Entry");
+  saveBtn.onclick=()=>{
+    if(items.some(it=>!it.name.trim()||it.price<=0)){alert("Fill all item names and prices.");return;}
+    const total=items.reduce((s,it)=>s+it.qty*it.price,0);
+    const tx={id:Date.now().toString(),date:todayStr(),type:"debt",items:items.map(it=>({...it,name:it.name.trim()})),amount:total};
+    persist(prev=>{const cl=prev.clients[activeClient];return{...prev,clients:{...prev.clients,[activeClient]:{...cl,outstanding:cl.outstanding+total,transactions:[...cl.transactions,tx]}}};});
+  };
+
+  [itemsWrap,addItemBtn,totalDiv,saveBtn].forEach(e=>box.appendChild(e));
+  return box;
+}
+
+function renderAddCredit(c,sym){
+  const box=el("div","form-box");
+  box.innerHTML=`<div class="form-title">✅ Record Credit</div><p style="color:#7f8c8d;margin-bottom:10px">Outstanding: <strong style="color:#e74c3c">${money(c.outstanding,sym)}</strong></p>`;
+  const amtInp=el("input"); amtInp.type="number"; amtInp.min="0"; amtInp.placeholder=`Amount received ${sym}`;
+  const noteInp=el("input"); noteInp.placeholder="Note (e.g. Cash payment, partial)";
+  const dateInp=el("input"); dateInp.type="date"; dateInp.value=todayStr(); // editable date!
+  const dateLbl=el("label","Date of Payment"); dateLbl.style.marginTop="4px";
+  const saveBtn=el("button","btn btn-green","Record Credit");
+  saveBtn.onclick=()=>{
+    const amt=parseFloat(amtInp.value);
+    if(!amt||amt<=0){alert("Enter a valid amount.");return;}
+    const tx={id:Date.now().toString(),date:dateInp.value||todayStr(),type:"credit",note:noteInp.value.trim()||"Credit / Payment",amount:amt};
+    persist(prev=>{const cl=prev.clients[activeClient];return{...prev,clients:{...prev.clients,[activeClient]:{...cl,outstanding:Math.max(0,cl.outstanding-amt),transactions:[...cl.transactions,tx]}}};});
+  };
+  [amtInp,noteInp,dateLbl,dateInp,saveBtn].forEach(e=>box.appendChild(e));
+  return box;
+}
+
+// ════════════════════════════════════════════════════════════
+//  EXPORT MODAL
+// ════════════════════════════════════════════════════════════
+function showExportModal(){
+  const bg=el("div","modal-bg");
+  const modal=el("div","export-modal");
+
+  const head=el("div","export-head");
+  head.innerHTML=`<span>📋 View & Copy Ledger Data</span>`;
+  const closeBtn=el("button","","✕"); closeBtn.onclick=()=>bg.remove();
+  head.appendChild(closeBtn); modal.appendChild(head);
+
+  const etabs=el("div","export-tabs");
+  const clientNames=Object.keys(store.clients).sort();
+  let etab="summary", selClient=clientNames[0]||"";
+
+  const s1=el("button","tab active","📊 Full Summary");
+  const s2=el("button","tab","👤 Per Client");
+  etabs.appendChild(s1); etabs.appendChild(s2); modal.appendChild(etabs);
+
+  const selRow=el("div"); selRow.style.cssText="padding:8px 12px;background:var(--bg);border-bottom:1px solid #ede0cc;display:none";
+  const selEl=el("select");
+  clientNames.forEach(n=>{ const o=el("option","",n); o.value=n; selEl.appendChild(o); });
+  selEl.style.marginBottom="0"; selRow.appendChild(selEl); modal.appendChild(selRow);
+
+  const hint=el("div","export-hint","Tap <strong>Copy All</strong> → open <strong>WPS Office</strong> → New Spreadsheet → tap cell → long-press → <strong>Paste</strong>");
+  modal.appendChild(hint);
+
+  const body=el("div","export-body");
+  const pre=el("pre");
+  body.appendChild(pre); modal.appendChild(body);
+
+  const foot=el("div","export-foot");
+  const copyBtn=el("button","btn btn-primary","📋 Copy All to Clipboard");
+  foot.appendChild(copyBtn); modal.appendChild(foot);
+
+  function updateText(){
+    pre.textContent = etab==="summary" ? buildExportText(store) : buildExportText(store,selClient);
+  }
+  updateText();
+
+  s1.onclick=()=>{ etab="summary"; s1.classList.add("active"); s2.classList.remove("active"); selRow.style.display="none"; updateText(); };
+  s2.onclick=()=>{ etab="client"; s2.classList.add("active"); s1.classList.remove("active"); selRow.style.display="block"; updateText(); };
+  selEl.onchange=()=>{ selClient=selEl.value; updateText(); };
+  copyBtn.onclick=()=>{ copyText(pre.textContent,()=>{ copyBtn.textContent="✅ Copied! Now paste into WPS"; setTimeout(()=>copyBtn.textContent="📋 Copy All to Clipboard",3000); }); };
+
+  bg.appendChild(modal);
+  bg.onclick=e=>{ if(e.target===bg) bg.remove(); };
+  document.body.appendChild(bg);
+}
+
+// ════════════════════════════════════════════════════════════
+//  SETTINGS
+// ════════════════════════════════════════════════════════════
+function renderSettings(){
+  const sym=store.currencySymbol||"₨";
+  const wrap=el("div","form-box");
+  wrap.innerHTML=`<div class="form-title">⚙️ Settings</div>`;
+  const flashDiv=el("div"); wrap.appendChild(flashDiv);
+
+  function flash(msg,type="ok"){
+    flashDiv.innerHTML=`<div class="flash flash-${type}">${type==="ok"?"✅":"⚠️"} ${msg}</div>`;
+    setTimeout(()=>flashDiv.innerHTML="",3000);
+  }
+
+  // ── Shop Name ──
+  const sec1=el("div","settings-section");
+  sec1.innerHTML=`<div class="section-head"><span class="section-title">🏪 Shop Name</span></div>`;
+  const snInp=el("input"); snInp.value=store.shopName; snInp.placeholder="Your shop name";
+  const snBtn=el("button","btn btn-primary","Save");
+  snBtn.onclick=()=>{ if(!snInp.value.trim()){flash("Name cannot be empty.","err");return;} persist(p=>({...p,shopName:snInp.value.trim()})); flash("Shop name saved!"); };
+  sec1.appendChild(snInp); sec1.appendChild(snBtn);
+  wrap.appendChild(sec1);
+
+  // ── Currency ──
+  const sec2=el("div","settings-section");
+  sec2.innerHTML=`<div class="section-head"><span class="section-title">💱 Currency</span></div><p style="font-size:12px;color:#9a8878;margin-bottom:10px">Current: <strong>${sym}</strong></p>`;
+  const curGrid=el("div","currency-grid");
+  [{label:"🇵🇰 PKR",s:"₨"},{label:"🇺🇸 USD",s:"$"},{label:"🇮🇳 INR",s:"₹"},{label:"🇬🇧 GBP",s:"£"},{label:"🇪🇺 EUR",s:"€"},{label:"🇦🇪 AED",s:"د.إ"}].forEach(opt=>{
+    const b=el("button","cur-btn",`${opt.label} (${opt.s})`);
+    if(store.currencySymbol===opt.s) b.classList.add("active");
+    b.onclick=()=>{ persist(p=>({...p,currencySymbol:opt.s})); flash(`Currency set to ${opt.s}`); };
+    curGrid.appendChild(b);
+  });
+  sec2.appendChild(curGrid);
+  const cusRow=el("div","row-btns"); cusRow.style.gap="8px";
+  const cusInp=el("input"); cusInp.placeholder="Custom symbol e.g. CHF"; cusInp.style.marginBottom="0";
+  const cusBtn=el("button","btn btn-primary","Set"); cusBtn.style.width="auto";cusBtn.style.padding="0 16px";
+  cusBtn.onclick=()=>{ if(!cusInp.value.trim()){flash("Enter a symbol","err");return;} persist(p=>({...p,currencySymbol:cusInp.value.trim()})); flash(`Currency set to ${cusInp.value.trim()}`); };
+  const cusWrap=el("div"); cusWrap.style.cssText="display:flex;gap:8px;margin-top:8px";
+  cusWrap.appendChild(cusInp); cusWrap.appendChild(cusBtn);
+  sec2.appendChild(cusWrap);
+  wrap.appendChild(sec2);
+
+  // ── Google Sheets ──
+  const sec3=el("div","settings-section");
+  sec3.innerHTML=`<div class="section-head"><span class="section-title">📊 Google Sheets Sync</span></div>`;
+  const gBox=el("div","sync-info-box");
+  const connected=!!store.googleScriptUrl;
+  gBox.innerHTML=`<div class="si-title">${connected?"🟢 Connected — syncing every entry":"⚪ Not connected yet"}</div><div class="si-desc">Paste your Google Apps Script Web App URL to enable real-time sync. Every debt/credit entry will appear in your Google Sheet instantly.</div>`;
+  const gInp=el("input"); gInp.value=store.googleScriptUrl||""; gInp.placeholder="https://script.google.com/macros/s/...";
+  const gRow=el("div"); gRow.style.cssText="display:flex;gap:8px";
+  const gSave=el("button","btn btn-primary","Save URL"); gSave.style.cssText="width:auto;padding:0 16px";
+  gSave.onclick=()=>{
+    const url=gInp.value.trim();
+    if(url&&!url.startsWith("https://")){flash("URL must start with https://","err");return;}
+    persist(p=>({...p,googleScriptUrl:url}));
+    flash(url?"Google Sheets URL saved! Syncing is now active.":"Sync removed.");
+  };
+  gRow.appendChild(gInp); gRow.appendChild(gSave);
+  if(connected){ const gTest=el("button","btn btn-ghost","Test"); gTest.style.cssText="width:auto;padding:0 14px;margin:0"; gTest.onclick=()=>{syncSheets(store);flash("Test sync sent to Google Sheets!");}; gRow.appendChild(gTest); }
+  gBox.appendChild(gRow);
+  sec3.appendChild(gBox);
+  wrap.appendChild(sec3);
+
+  // ── Copy/Export ──
+  const sec4=el("div","settings-section");
+  sec4.innerHTML=`<div class="section-head"><span class="section-title">📋 View & Copy Data</span></div>`;
+  const copyBtn=el("button","btn btn-green","📋 View & Copy Ledger Data");
+  copyBtn.onclick=()=>showExportModal();
+  sec4.appendChild(copyBtn);
+  wrap.appendChild(sec4);
+
+  // ── Users ──
+  const sec5=el("div","settings-section");
+  sec5.innerHTML=`<div class="section-head"><span class="section-title">👥 Users</span></div>`;
+  let editingUser=null;
+
+  function renderUsers(){
+    const existing=sec5.querySelector(".users-list");
+    if(existing) existing.remove();
+    const list=el("div","users-list");
+    store.users.forEach(u=>{
+      if(editingUser===u.username){
+        const ecard=el("div","edit-card");
+        ecard.innerHTML=`<div class="ec-title">✏️ Editing: ${u.username}</div>`;
+        const euInp=el("input"); euInp.value=u.username; euInp.placeholder="Username";
+        const epInp=el("input"); epInp.type="password"; epInp.placeholder="New PIN (blank = keep current)";
+        const erSel=el("select");
+        [{v:"staff",l:"Staff — add entries only"},{v:"admin",l:"Admin — full access"}].forEach(opt=>{
+          const o=el("option","",opt.l); o.value=opt.v; if(u.role===opt.v)o.selected=true; erSel.appendChild(o);
+        });
+        const erow=el("div","row-btns");
+        const ecan=el("button","btn btn-ghost","Cancel"); ecan.onclick=()=>{editingUser=null;renderUsers();};
+        const esav=el("button","btn btn-primary","Save");
+        esav.onclick=()=>{
+          const nn=euInp.value.trim();
+          if(!nn){flash("Username empty","err");return;}
+          if(nn!==u.username&&store.users.find(x=>x.username===nn)){flash("Username taken","err");return;}
+          if(epInp.value&&epInp.value.length<4){flash("PIN min 4 digits","err");return;}
+          persist(prev=>({...prev,users:prev.users.map(x=>x.username===u.username?{username:nn,pinHash:epInp.value?hashPin(epInp.value):x.pinHash,role:erSel.value}:x)}));
+          editingUser=null; flash("User updated!");
+        };
+        erow.appendChild(ecan); erow.appendChild(esav);
+        [euInp,epInp,erSel,erow].forEach(e=>ecard.appendChild(e));
+        list.appendChild(ecard);
+      } else {
+        const row=el("div","user-row");
+        const av=el("div","user-avatar",u.username[0].toUpperCase());
+        const inf=el("div","user-info");
+        inf.innerHTML=`<div class="uname">${u.username}${u.username===session.username?'<span class="tag-you"> (you)</span>':''}</div><span class="urole ${u.role==="admin"?"role-admin":"role-staff"}">${u.role}</span>`;
+        const editBtn=el("button","btn-icon","✏️"); editBtn.onclick=()=>{editingUser=u.username;renderUsers();};
+        row.appendChild(av); row.appendChild(inf); row.appendChild(editBtn);
+        if(u.username!==session.username){
+          const delBtn=el("button","btn-icon","🗑"); delBtn.style.cssText="background:#fde8e8;color:#c0392b";
+          delBtn.onclick=()=>{
+            if(store.users.length===1){flash("Cannot delete only user","err");return;}
+            if(!confirm(`Remove user ${u.username}?`)) return;
+            persist(prev=>({...prev,users:prev.users.filter(x=>x.username!==u.username)}));
+            flash("User removed.");
+          };
+          row.appendChild(delBtn);
+        }
+        list.appendChild(row);
+      }
+    });
+    sec5.appendChild(list);
+  }
+  renderUsers();
+
+  const addSec=el("div"); addSec.style.marginTop="16px";
+  addSec.innerHTML=`<div class="section-title" style="margin-bottom:10px;font-size:14px">➕ Add New User</div>`;
+  const nuInp=el("input"); nuInp.placeholder="Username";
+  const npInp=el("input"); npInp.type="password"; npInp.placeholder="PIN (min 4 digits)";
+  const nrSel=el("select");
+  [{v:"staff",l:"Staff — add entries only"},{v:"admin",l:"Admin — full access"}].forEach(opt=>{
+    const o=el("option","",opt.l); o.value=opt.v; nrSel.appendChild(o);
+  });
+  const naBtn=el("button","btn btn-primary","Add User");
+  naBtn.onclick=()=>{
+    const un=nuInp.value.trim();
+    if(!un){flash("Enter username","err");return;}
+    if(npInp.value.length<4){flash("PIN min 4 digits","err");return;}
+    if(store.users.find(u=>u.username===un)){flash("Username taken","err");return;}
+    persist(prev=>({...prev,users:[...prev.users,{username:un,pinHash:hashPin(npInp.value),role:nrSel.value}]}));
+    nuInp.value=""; npInp.value=""; flash("User added!");
+  };
+  [nuInp,npInp,nrSel,naBtn].forEach(e=>addSec.appendChild(e));
+  sec5.appendChild(addSec);
+  wrap.appendChild(sec5);
+
+  return wrap;
+}
+
+// ── Boot ─────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
